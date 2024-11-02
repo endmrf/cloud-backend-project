@@ -1,0 +1,70 @@
+repos:
+-   repo: local
+    hooks:
+      - id: database_mock
+        name: database_mock
+        entry: bash -c 'yes | cp -rf mock_data.db /tmp/mock_data.db'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+-   repo: https://github.com/psf/black
+    rev: 19.3b0
+    hooks:
+    - id: black
+      files: '^main_module/main_layer/python/core'
+      args: ['--skip-string-normalization']
+      exclude: 'mock_data.db'
+      stages: [commit]
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+    - id: flake8
+      name: flake8
+      language: python
+      entry: flake8
+      files: '^main_module/main_layer/python/core'
+      exclude: 'mock_data.db'
+      stages: [commit]
+-   repo: local
+    hooks:
+    -   id: pylint-score
+        name: pylint
+        entry: pylint
+        language: python
+        types: [python]
+        files: '^main_module/main_layer/python/core'
+        args:
+        - --score=yes
+        - --fail-under=8.5
+        - --reports=no
+        - --confidence=HIGH
+        always_run: true
+        stages: [commit]
+-   repo: local
+    hooks:
+    - id: pytest
+      name: pytest
+      language: system
+      entry: pytest main_module/main_layer/python/core -v -s --disable-pytest-warnings
+      files: '^main_module/main_layer/python/core'
+      always_run: true
+      pass_filenames: false
+      exclude: 'mock_data.db'
+      stages: [commit]
+    - id: pytest-cov
+      name: pytest-cov
+      language: system
+      entry: pytest main_module/main_layer/python/core --cov=core --cov-fail-under=89 --disable-pytest-warnings
+      files: '^main_module/main_layer/python/core'
+      types: [python]
+      pass_filenames: false
+      always_run: true
+      stages: [commit]
+-   repo: local
+    hooks:
+      - id: requirements
+        name: requirements
+        entry: bash -c 'venv/bin/pip3 freeze > requirements.txt; git add requirements.txt'
+        language: system
+        pass_filenames: false
+        stages: [commit]

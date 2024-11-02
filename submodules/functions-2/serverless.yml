@@ -1,0 +1,51 @@
+service: ${env:SERVICE_NAME}
+
+# plugins:
+# - serverless-offline
+
+custom:
+  logRetentionInDays:
+    prod: 90
+    dev: 30
+    hom: 30
+
+provider:
+  name: aws
+  stage: ${env:STAGE}
+  REGION: ${env:REGION}
+  stackName: ${env:FUNCTIONS_STACK_NAME}-2
+  apiName: ${env:SERVICE_NAME}-${self:provider.stage}
+  apiGateway:
+    metrics:  true
+    restApiId:
+      'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-RestApiId
+    restApiRootResourceId:
+      'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-RestApiRootResourceId
+    restApiResources:
+      empresas:
+        'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-EmpresasResourceApiId
+      'empresas/{empresa_id}':
+        'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-EmpresaIdResourceApiId
+      'empresas/{empresa_id}/projects':
+        'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-ProjectsResourceApiId
+      'empresas/{empresa_id}/projects/{project_id}':
+        'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-ProjectIdResourceApiId
+  authorizer:
+    type: COGNITO_USER_POOLS
+    authorizerId:
+      'Fn::ImportValue': ${env:SERVICE_NAME}-${self:provider.stage}-ApiGatewayAuthorizerId
+  deploymentBucket:
+    name: ${env:DEPLOYMENT_BUCKET}
+  deploymentPrefix: ${self:provider.stackName}
+  logRetentionInDays: ${self:custom.logRetentionInDays.${env:STAGE}}
+
+functions:
+
+  CreatePackage: ${file(Packages/functions.yml):CreatePackage}
+  UpdatePackage: ${file(Packages/functions.yml):UpdatePackage}
+  DeletePackage: ${file(Packages/functions.yml):DeletePackage}
+  ListPackages: ${file(Packages/functions.yml):ListPackages}
+  GetPackage: ${file(Packages/functions.yml):GetPackage}
+
+package:
+  individually: true

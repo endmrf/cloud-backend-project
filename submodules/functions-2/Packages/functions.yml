@@ -1,0 +1,302 @@
+CreatePackage:
+  custom:
+    PATH:
+      local: "Packages/CreatePackage/"
+      remote: ""
+  environment:
+    REGION: ${self:provider.region}
+    NAMESPACE: ${self:provider.apiName}
+    MODULE: ${env:MODULE_NAME}
+    AURORA_CLUSTER_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessRDSArn}
+    AURORA_DATABASE_NAME: ${cf:${self:provider.apiName}-resources.AuroraServerlessDBName}
+    AURORA_SECRET_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessSecretArn}
+    CORE_NAMESPACE: ${env:CORE_REFERENCE}
+  name: ${env:SERVICE_NAME}-${env:STAGE}-CreatePackage
+  handler: ${self:functions.CreatePackage.custom.PATH.${env:DEPLOYAREA}}lambda_function.lambda_handler
+  timeout: 30
+  runtime: python3.8
+  memorySize: 384
+  role:
+    Fn::ImportValue: !Sub "${env:CORE_REFERENCE}-LambdaBasicInvokeRoleArn"
+  package:
+    artifact: Packages/CreatePackage/CreatePackage.zip
+  layers:
+    - ${cf:${env:CORE_REFERENCE}-resources.UtilLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLibLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLayerArn}
+  events:
+    - http:
+        path: empresas/{empresa_id}/packages/new
+        method: post
+        cors: true
+        integration: lambda
+        request:
+          parameters:
+            paths:
+              empresa_id: true
+          template:
+            application/json: >-
+              {
+                "empresa_id": "$input.params('empresa_id')",
+                "body": $input.json('$'),
+                "principal": {
+                  "id": "$context.authorizer.id",
+                  "name": "$context.authorizer.name",
+                  "email": "$context.authorizer.email",
+                  "phone_number": "$context.authorizer.phone_number",
+                  "permission": "$context.authorizer.permission",
+                  "empresa_id": "$context.authorizer.empresa_id",
+                  "projects": $util.escapeJavaScript($context.authorizer.projects).replaceAll('\\','')
+                }
+              }
+        authorizer:
+          name: CoreF2Authorizer 
+          arn: ${cf:${self:provider.apiName}-resources.LambdaAuthorizerArn}
+          resultTtlInSeconds: 2700
+          identitySource: method.request.header.Authorization
+          type: request
+UpdatePackage:
+  custom:
+    PATH:
+      local: "Packages/UpdatePackage/"
+      remote: ""
+  environment:
+    REGION: ${self:provider.region}
+    NAMESPACE: ${self:provider.apiName}
+    MODULE: ${env:MODULE_NAME}
+    AURORA_CLUSTER_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessRDSArn}
+    AURORA_DATABASE_NAME: ${cf:${self:provider.apiName}-resources.AuroraServerlessDBName}
+    AURORA_SECRET_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessSecretArn}
+    CORE_NAMESPACE: ${env:CORE_REFERENCE}
+  name: ${env:SERVICE_NAME}-${env:STAGE}-UpdatePackage
+  handler: ${self:functions.UpdatePackage.custom.PATH.${env:DEPLOYAREA}}lambda_function.lambda_handler
+  timeout: 30
+  runtime: python3.8
+  memorySize: 384
+  role:
+    Fn::ImportValue: !Sub "${env:CORE_REFERENCE}-LambdaBasicInvokeRoleArn"
+  package:
+    artifact: Packages/UpdatePackage/UpdatePackage.zip
+  layers:
+    - ${cf:${env:CORE_REFERENCE}-resources.UtilLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLibLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLayerArn}
+  events:
+    - http:
+        path: empresas/{empresa_id}/packages/{package_id}
+        method: put
+        cors: true
+        integration: lambda
+        request:
+          parameters:
+            paths:
+              empresa_id: true
+              package_id: true
+          template:
+            application/json: >- 
+              {
+                "id": "$input.params('package_id')",
+                "body": $input.json('$'),
+                "empresa_id": "$input.params('empresa_id')",
+                "principal": {
+                  "id": "$context.authorizer.id",
+                  "name": "$context.authorizer.name",
+                  "email": "$context.authorizer.email",
+                  "phone_number": "$context.authorizer.phone_number",
+                  "permission": "$context.authorizer.permission",
+                  "empresa_id": "$context.authorizer.empresa_id",
+                  "projects": $util.escapeJavaScript($context.authorizer.projects).replaceAll('\\','')
+                }
+              }
+        authorizer:
+          name: CoreF2Authorizer 
+          arn: ${cf:${self:provider.apiName}-resources.LambdaAuthorizerArn}
+          resultTtlInSeconds: 2700
+          identitySource: method.request.header.Authorization
+          type: request
+DeletePackage:
+  custom:
+    PATH:
+      local: "Packages/DeletePackage/"
+      remote: ""
+  environment:
+    REGION: ${self:provider.region}
+    NAMESPACE: ${self:provider.apiName}
+    MODULE: ${env:MODULE_NAME}
+    AURORA_CLUSTER_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessRDSArn}
+    AURORA_DATABASE_NAME: ${cf:${self:provider.apiName}-resources.AuroraServerlessDBName}
+    AURORA_SECRET_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessSecretArn}
+    CORE_NAMESPACE: ${env:CORE_REFERENCE}
+  name: ${env:SERVICE_NAME}-${env:STAGE}-DeletePackage
+  handler: ${self:functions.DeletePackage.custom.PATH.${env:DEPLOYAREA}}lambda_function.lambda_handler
+  timeout: 30
+  runtime: python3.8
+  memorySize: 384
+  role:
+    Fn::ImportValue: !Sub "${env:CORE_REFERENCE}-LambdaBasicInvokeRoleArn"
+  package:
+    artifact: Packages/DeletePackage/DeletePackage.zip
+  layers:
+    - ${cf:${env:CORE_REFERENCE}-resources.UtilLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLibLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLayerArn}
+  events:
+    - http:
+        path: empresas/{empresa_id}/packages/{package_id}
+        method: delete
+        cors: true
+        integration: lambda
+        request:
+          parameters:
+            paths:
+              empresa_id: true
+              package_id: true
+          template:
+            application/json: >- 
+              {
+                "id": "$input.params('package_id')",
+                "empresa_id": "$input.params('empresa_id')",
+                "principal": {
+                  "id": "$context.authorizer.id",
+                  "name": "$context.authorizer.name",
+                  "email": "$context.authorizer.email",
+                  "phone_number": "$context.authorizer.phone_number",
+                  "permission": "$context.authorizer.permission",
+                  "empresa_id": "$context.authorizer.empresa_id",
+                  "projects": $util.escapeJavaScript($context.authorizer.projects).replaceAll('\\','')
+                }
+              }
+        authorizer:
+          name: CoreF2Authorizer 
+          arn: ${cf:${self:provider.apiName}-resources.LambdaAuthorizerArn}
+          resultTtlInSeconds: 2700
+          identitySource: method.request.header.Authorization
+          type: request
+ListPackages:
+  custom:
+    PATH:
+      local: "Packages/ListPackages/"
+      remote: ""
+  environment:
+    REGION: ${self:provider.region}
+    MODULE: ${env:MODULE_NAME}
+    NAMESPACE: ${self:provider.apiName}
+    AURORA_CLUSTER_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessRDSArn}
+    AURORA_DATABASE_NAME: ${cf:${self:provider.apiName}-resources.AuroraServerlessDBName}
+    AURORA_SECRET_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessSecretArn}
+    CORE_NAMESPACE: ${self:provider.apiName}
+  name: ${env:SERVICE_NAME}-${env:STAGE}-ListPackages
+  handler: ${self:functions.ListPackages.custom.PATH.${env:DEPLOYAREA}}lambda_function.lambda_handler
+  timeout: 30
+  runtime: python3.8
+  memorySize: 384
+  role:
+    Fn::ImportValue: !Sub "${env:CORE_REFERENCE}-LambdaBasicInvokeRoleArn"
+  package:
+    artifact: Packages/ListPackages/ListPackages.zip
+  layers:
+    - ${cf:${env:CORE_REFERENCE}-resources.UtilLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLibLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLayerArn}
+  events:
+    - http:
+        path: empresas/{empresa_id}/packages
+        method: get
+        cors: true
+        integration: lambda
+        request:
+          parameters:
+            querystrings:
+              name: false
+              symbol: false
+              offset: false
+              limit: false
+              order: false
+              orderfield: false
+            paths:
+              empresa_id: true
+          template:
+            application/json: >-
+              {
+                "empresa_id": "$input.params('empresa_id')",
+                "body": $input.json('$'), 
+                "order": "$input.params('order')",
+                "orderfield": "$input.params('orderfield')",
+                "symbol": "$input.params('symbol')",
+                "name": "$input.params('name')",
+                "offset": "$input.params('offset')",
+                "limit": "$input.params('limit')",
+                "principal": {
+                  "id": "$context.authorizer.id",
+                  "name": "$context.authorizer.name",
+                  "email": "$context.authorizer.email",
+                  "phone_number": "$context.authorizer.phone_number",
+                  "permission": "$context.authorizer.permission",
+                  "empresa_id": "$context.authorizer.empresa_id",
+                  "projects": $util.escapeJavaScript($context.authorizer.projects).replaceAll('\\','')
+                }
+              }
+        authorizer:
+          name: CoreF2Authorizer 
+          arn: ${cf:${self:provider.apiName}-resources.LambdaAuthorizerArn}
+          resultTtlInSeconds: 2700
+          identitySource: method.request.header.Authorization
+          type: request
+GetPackage:
+  custom:
+    PATH:
+      local: "Packages/GetPackage/"
+      remote: ""
+  environment:
+    REGION: ${self:provider.region}
+    NAMESPACE: ${self:provider.apiName}
+    MODULE: ${env:MODULE_NAME}
+    AURORA_CLUSTER_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessRDSArn}
+    AURORA_DATABASE_NAME: ${cf:${self:provider.apiName}-resources.AuroraServerlessDBName}
+    AURORA_SECRET_ARN: ${cf:${self:provider.apiName}-resources.AuroraServerlessSecretArn}
+    CORE_NAMESPACE: ${self:provider.apiName}
+  name: ${env:SERVICE_NAME}-${env:STAGE}-GetPackage
+  handler: ${self:functions.GetPackage.custom.PATH.${env:DEPLOYAREA}}lambda_function.lambda_handler
+  timeout: 30
+  runtime: python3.8
+  memorySize: 384
+  role:
+    Fn::ImportValue: !Sub "${env:CORE_REFERENCE}-LambdaBasicInvokeRoleArn"
+  package:
+    artifact: Packages/GetPackage/GetPackage.zip
+  layers:
+    - ${cf:${env:CORE_REFERENCE}-resources.UtilLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLibLayerArn}
+    - ${cf:${self:provider.apiName}-resources.CoreLayerArn}
+  events:
+    - http:
+        path: empresas/{empresa_id}/packages/{package_id}
+        method: get
+        cors: true
+        integration: lambda
+        request:
+          parameters:
+            paths:
+              empresa_id: true
+              package_id: true
+          template:
+            application/json: >-
+              {
+                "empresa_id": "$input.params('empresa_id')", 
+                "id": "$input.params('package_id')",
+                "principal": {
+                  "id": "$context.authorizer.id",
+                  "name": "$context.authorizer.name",
+                  "email": "$context.authorizer.email",
+                  "phone_number": "$context.authorizer.phone_number",
+                  "permission": "$context.authorizer.permission",
+                  "empresa_id": "$context.authorizer.empresa_id",
+                  "projects": $util.escapeJavaScript($context.authorizer.projects).replaceAll('\\','')
+                }
+              }
+        authorizer:
+          name: CoreF2Authorizer 
+          arn: ${cf:${self:provider.apiName}-resources.LambdaAuthorizerArn}
+          resultTtlInSeconds: 2700
+          identitySource: method.request.header.Authorization
+          type: request
